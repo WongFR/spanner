@@ -20,7 +20,7 @@ import {
 
 const WORKSPACE = "./"; // Root directory where your code and projects are located
 Deno.chdir(WORKSPACE);
-console.log("🚀 Workspace:", Deno.cwd());
+console.log("Workspace:", Deno.cwd());
 
 function getRequiredEnv(name: string): string {
   const v = Deno.env.get(name);
@@ -63,7 +63,7 @@ loopInterceptors.register(errorInterceptor);
 
 
 await zypher.init();
-console.log("✅ Zypher initialized");
+console.log("Zypher initialized");
 
 async function runZypherTask(task: string): Promise<string> {
   const events = zypher.runTask(task, "claude-sonnet-4-20250514");
@@ -94,202 +94,36 @@ function jsonResponse(data: unknown, status = 200): Response {
   });
 }
 
-// ===== Simple Frontend HTML (Single File) =====
-const INDEX_HTML = /*html*/ `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <title>Log Fix Agent</title>
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <style>
-    body {
-      font-family: Inter, system-ui, sans-serif;
-      margin: 0; height: 100vh; overflow: hidden;
-      background: #f3f4f6;
-    }
-    #app {
-      display: flex; flex-direction: column;
-      height: 100%;
-      max-width: 860px;
-      margin: 0 auto; background: white;
-      box-shadow: 0 0 20px rgba(0,0,0,0.08);
-    }
-
-    header {
-      padding: 14px 20px; font-size: 18px;
-      font-weight: 600; background:#111827; color:white;
-    }
-
-    #chat {
-      flex: 1; padding: 20px; overflow-y: auto;
-      background: #f9fafb;
-    }
-
-    .msg { margin-bottom: 14px; display:flex; }
-    .msg.user { justify-content:flex-end; }
-    .msg.agent { justify-content:flex-start; }
-
-    .bubble {
-      padding: 12px 14px; border-radius: 12px; max-width: 70%;
-      line-height: 1.4; white-space: pre-wrap;
-      font-size: 14px;
-    }
-
-    .user .bubble {
-      background: #2563eb; color: white;
-      border-bottom-right-radius: 4px;
-    }
-    .agent .bubble {
-      background: white; border: 1px solid #e5e7eb;
-      border-bottom-left-radius: 4px;
-    }
-
-    #controls {
-      border-top: 1px solid #e5e7eb;
-      padding: 12px; background:white;
-      display:flex; flex-direction:column;
-      gap: 10px;
-    }
-
-    #controls-top {
-      display:flex; gap:10px; align-items:center;
-    }
-
-    button {
-      padding: 8px 14px; border-radius: 8px;
-      border: none; cursor: pointer;
-      font-size: 14px; font-weight: 500;
-      background: #111827; color:white;
-      transition: background 0.2s;
-    }
-    button:hover { background: #374151; }
-
-    input[type=file] {
-      padding: 6px;
-    }
-
-    textarea {
-      width: 100%; resize: vertical; min-height: 70px;
-      padding: 10px; border-radius: 8px;
-      border: 1px solid #d1d5db; font-size: 14px;
-    }
-  </style>
-</head>
-
-<body>
-<div id="app">
-  <header>⚙️ Log-based Bug Fix Agent</header>
-  <div id="chat"></div>
-
-  <div id="controls">
-    <div id="controls-top">
-      <input id="logFile" type="file" accept=".txt,.log" />
-      <button id="uploadBtn">📤 Upload and Analyze (Step 1)</button>
-    </div>
-
-    <div id="phaseBtns">
-      <button id="planBtn">📌 Confirm root cause → Generate plan (Step 2)</button>
-      <button id="fixBtn">🛠 Confirm plan → Auto fix (Step 3)</button>
-    </div>
-
-    <textarea id="userInput" placeholder="Enter root cause or fix plan here..."></textarea>
-  </div>
-</div>
-
-<script>
-  const chat = document.getElementById('chat');
-  const logFile = document.getElementById('logFile');
-  const uploadBtn = document.getElementById('uploadBtn');
-  const planBtn = document.getElementById('planBtn');
-  const fixBtn = document.getElementById('fixBtn');
-  const userInput = document.getElementById('userInput');
-
-  let currentLogPath = null;
-
-  function addMsg(role, text) {
-    const div = document.createElement('div');
-    div.className = 'msg ' + role;
-    const b = document.createElement('div');
-    b.className = 'bubble';
-
-    if (role === 'agent') {
-     // Render markdown
-     b.innerHTML = marked.parse(text);
-    } else {
-      // User messages remain plain text
-      b.textContent = text;
-    }
-
-    div.appendChild(b);
-    chat.appendChild(div);
-    chat.scrollTop = chat.scrollHeight;
-  }
-
-  async function callApi(path, body) {
-    const res = await fetch(path, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-    if (!res.ok) throw new Error(await res.text());
-    return res.json();
-  }
-
-  uploadBtn.onclick = async () => {
-    const file = logFile.files[0];
-    if (!file) { alert("Please select a log file"); return; }
-    addMsg("user", "📤 Upload log and start analysis");
-
-    const form = new FormData();
-    form.append("file", file);
-    const res = await fetch("/api/upload-log", { method:"POST", body:form });
-    const data = await res.json();
-
-    currentLogPath = data.logPath;
-    addMsg("agent", data.resultText);
-  };
-
-  planBtn.onclick = async () => {
-    if (!currentLogPath) return alert("Please upload log first");
-    const cause = userInput.value.trim();
-    if (!cause) return alert("Please enter root cause");
-
-    addMsg("user", "Confirm root cause: " + cause);
-    const data = await callApi("/api/confirm-root-cause", {
-      logPath: currentLogPath,
-      chosenRootCause: cause,
-    });
-    addMsg("agent", data.resultText);
-  };
-
-  fixBtn.onclick = async () => {
-    if (!currentLogPath) return alert("Please upload log first");
-    const plan = userInput.value.trim();
-    if (!plan) return alert("Please enter final fix plan");
-
-    addMsg("user", "🛠 Start fixing: " + plan);
-    const data = await callApi("/api/confirm-fix-plan", {
-      logPath: currentLogPath,
-      fixPlan: plan,
-    });
-    addMsg("agent", data.resultText);
-    if (data.reportPath) {
-      addMsg("agent", "📄 Report generated: " + data.reportPath);
-    }
-  };
-</script>
-</body>
-</html>`;
+// ===== Frontend Files =====
+// Frontend files are now separated into public/ directory:
+// - public/index.html (HTML structure)
+// - public/style.css (CSS styles)
+// - public/app.js (JavaScript code)
 
 // ===== HTTP Server =====
 Deno.serve(async (req) => {
   const url = new URL(req.url);
 
-  // Frontend page
-  if (req.method === "GET" && url.pathname === "/") {
-    return new Response(INDEX_HTML, {
-      headers: { "content-type": "text/html; charset=utf-8" },
-    });
+  // Static file serving
+  if (req.method === "GET") {
+    if (url.pathname === "/") {
+      const html = await Deno.readTextFile("./public/index.html");
+      return new Response(html, {
+        headers: { "content-type": "text/html; charset=utf-8" },
+      });
+    }
+    if (url.pathname === "/style.css") {
+      const css = await Deno.readTextFile("./public/style.css");
+      return new Response(css, {
+        headers: { "content-type": "text/css; charset=utf-8" },
+      });
+    }
+    if (url.pathname === "/app.js") {
+      const js = await Deno.readTextFile("./public/app.js");
+      return new Response(js, {
+        headers: { "content-type": "application/javascript; charset=utf-8" },
+      });
+    }
   }
 
   // Step 1: Upload log and perform root cause candidate analysis

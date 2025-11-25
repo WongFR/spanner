@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Log Fix Agent</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+<div id="app">
+  <header>Spanner</header>
+  <div id="chat"></div>
+
+  <div id="controls">
+    <div id="controls-top">
+      <input id="logFile" type="file" accept=".txt,.log" />
+      <button id="uploadBtn">Upload (Step 1)</button>
+    </div>
+
+    <div id="phaseBtns">
+      <button id="planBtn"> Confirm root cause (Step 2)</button>
+      <button id="fixBtn"> Confirm plan (Step 3)</button>
+    </div>
+
+    <textarea id="userInput" placeholder="Enter here..."></textarea>
+  </div>
+</div>
+<script src="/app.js"></script>
+</body>
+</html>
+
