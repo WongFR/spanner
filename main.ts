@@ -140,14 +140,8 @@ Deno.serve(async (req) => {
     await Deno.writeTextFile(logPath, text);
 
     const task = `
-[Phase: analyze]
-
 Log file path: \`${logPath}\`.
-
-1. Reconstruct the cross-project call chain using project names in each log line.
-2. Identify and rank multiple possible root causes.
-3. Output a concise, numbered list of candidate root causes for the user to choose from.
-4. Do NOT modify any code or run git commands at this phase.
+execute Step1.
 `;
 
     const resultText = await runZypherTask(task);
@@ -161,10 +155,6 @@ Log file path: \`${logPath}\`.
     const chosenRootCause: string = body.chosenRootCause;
 
     const task = `
-[Phase: plan]
-
-We are now at the planning phase.
-
 - Log file path: \`${logPath}\`.
 - The user has chosen the following root cause:
 
@@ -172,13 +162,7 @@ ${chosenRootCause}
 
 Based on this root cause:
 
-1. Design 2–3 alternative fix plans.
-2. For each plan, clearly describe:
-   - target project and key files
-   - high-level fix strategy
-   - potential risks / trade-offs
-3. Do NOT modify any files or run git commands at this phase.
-4. Output a numbered list of plans that the user can pick from or edit.
+Execute Step2
 `;
 
     const resultText = await runZypherTask(task);
@@ -194,8 +178,6 @@ Based on this root cause:
     const reportPath = "./bugfix-report.md";
 
     const task = `
-[Phase: fix]
-
 Now the user has confirmed the final fix plan.
 
 - Log file path: \`${logPath}\`.
@@ -203,23 +185,7 @@ Now the user has confirmed the final fix plan.
 
 ${fixPlan}
 
-You MUST now:
-
-1. For the relevant project(s):
-   - Create/switch to branch "fix-from-log-auto" via shell commands.
-   - Apply code changes using read_file + edit_file.
-   - Run tests (mvn test / gradle test) if available.
-   - Commit and push the changes.
-2. Generate or update a Markdown report at \`${reportPath}\`, including:
-   - call chain summary
-   - root cause description
-   - selected fix plan (the text above, maybe refined)
-   - changed files summary
-   - test results
-   - git commit link (if push succeeded)
-
-Be explicit and safe in your shell commands. Avoid any destructive operations.
-Finally, briefly summarize what you did so the UI can show it.
+Execute Step3
 `;
 
     const resultText = await runZypherTask(task);
